@@ -1,9 +1,10 @@
-final int ROWS = 80;
-final int COLS = 80;
-final int SCALE = 10;
-final float OMEGA = 0.05; //1 / (3 * 0.005 + 0.5);
+final int ROWS = 200;
+final int COLS = 100;
+final int SCALE = 4;
+final float OMEGA = 0.02; //1 / (3 * 0.005 + 0.5);
+final float C = 2;
 
-final int INIT_EAST = 100;
+final int INIT_EAST = 200;
 
 final int[] X_OFFSETS = new int[] { 0, 1, 0, -1, 0, 1, -1, -1, 1 };
 final int[] Y_OFFSETS = new int[] { 0, 0, 1, 0, -1, 1, 1, -1, -1 };
@@ -61,6 +62,7 @@ public class Cell {
     // One velocity for each direction (9 for 2 dimensions)
     public float[] densities;
     //public float[] microVels;
+    public PVector macroVelocity;
 
     public float speed;
 
@@ -87,27 +89,27 @@ public class Cell {
         return sum;
     }
 
-    public PVector getMacroVelocity() {
-        PVector result = new PVector(0, 0);
+    public void updateMacroVelocity() {
+        // PVector result = new PVector(0, 0);
 
-        for (int i = 0; i < 9; i++) {
-            result.add(new PVector(X_OFFSETS[i], Y_OFFSETS[i]).mult(densities[i] * 2));
-        }
+        // for (int i = 0; i < 9; i++) {
+        //     result.add(new PVector(X_OFFSETS[i], Y_OFFSETS[i]).mult(densities[i]));
+        // }
 
-        return result;
+        // return result;
 
-        // float d = getDensity();
-        // float x = (densities[1] + densities[5] + densities[8] - densities[3] - densities[6] - densities[7]) * d;
-        // float y = (densities[2] + densities[5] + densities[6] - densities[4] - densities[7] - densities[8]) * d;
+        float d = getDensity();
+        float x = (densities[1] + densities[5] + densities[8] - densities[3] - densities[6] - densities[7]) / (d + 3);
+        float y = (densities[2] + densities[5] + densities[6] - densities[4] - densities[7] - densities[8]) / (d + 3);
 
-        // return new PVector(x, y);
+        this.macroVelocity = new PVector(x * C, y * C);
     }
 
     // Equation 8
     public float[] getEqDensities(float density, PVector macroVel) {
         float[] equilibriumDen = new float[9];
         PVector[] directionVectors = getDirectionVectors();
-        float velocity = getMacroVelocity().mag();
+        float velocity = macroVelocity.mag();
         for (int i = 0; i < 9; i++) {
             equilibriumDen[i] = getDensity() * W_LIST[i] *
                                 (1.0 + directionVectors[i].mag() * 3.0 * velocity
@@ -120,9 +122,11 @@ public class Cell {
 
     public PVector[] getDirectionVectors(){
         PVector[] ret = new PVector[9];
-        for(int i=0; i<9; i++) {
+
+        for(int i = 0; i < 9; i++) {
             ret[i] = new PVector(X_OFFSETS[i], Y_OFFSETS[i]);
         }
+
         return ret;
     }
 
@@ -167,7 +171,8 @@ class Lattice {
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                result[i][j] = cells[i][j].getMacroVelocity();
+                cells[i][j].updateMacroVelocity();
+                result[i][j] = cells[i][j].macroVelocity;
             }
         }
 
@@ -189,7 +194,8 @@ class Lattice {
             for (int j = 0; j < cols; j++) {
                 // Calculate required macro-values
                 float macroDensity = cells[i][j].getDensity();
-                PVector macroVelocity = cells[i][j].getMacroVelocity();
+                cells[i][j].updateMacroVelocity();
+                PVector macroVelocity = cells[i][j].macroVelocity;
 
                 // Use equation 8 to calculate equilibrium densities
                 float[] eqDensities = cells[i][j].getEqDensities(macroDensity, macroVelocity);
@@ -225,10 +231,14 @@ class Lattice {
                         continue;
                     }
 
-                    if (valid(i + X_OFFSETS[dir], j + Y_OFFSETS[dir])) {
+                    if (valid(i + X_OFFSETS[dir], j + Y_OFFSETS[dir]) == 1) {
                         result[i + X_OFFSETS[dir]][j + Y_OFFSETS[dir]].densities[dir] = cells[i][j].densities[dir];
-                    } else {
+                        result[i][j].densities[dir] = 0;
+                    } else if (valid(i + X_OFFSETS[dir], j + Y_OFFSETS[dir]) == 0){
                         result[i][j].densities[Direction.opposite(dir)] = result[i][j].densities[dir];
+                        result[i][j].densities[dir] = 0;
+                    } else {
+                        // result[i][j].densities[dir] = 0;
                     }
                 }
             }
@@ -241,25 +251,25 @@ class Lattice {
         }
     }
 
-    private boolean valid(int i, int j) {
+    private int valid(int i, int j) {
         if (i >= rows || i < 0) {
-            return false;
+            return 2;
         }
 
         if (j >= cols || j < 0) {
-            return false;
+            return 2;
         }
 
         if (obstacles[i][j] == true) {
-            return false;
+            return 0;
         }
 
-        return true;
+        return 1;
     }
 }
 
 void setup() {
-    frameRate(5);
+    frameRate(30);
 
     boolean[][] obstacles = new boolean[ROWS][COLS];
 
@@ -269,7 +279,7 @@ void setup() {
 
             // Wind tunnel pattern -- top and bottom rows are obstacles.
             if (i == 0 || i == ROWS - 1) {
-                obstacles[i][j] = true;
+                obstacles[i][j] = false;
             }
         }
     }
@@ -285,7 +295,7 @@ void setup() {
     // }
 
     for (int i = 20; i < 30; i++) {
-        for (int j = 35; j < 36; j++) {
+        for (int j = 28; j < 29; j++) {
             obstacles[i][j] = true;
         }
     }
@@ -297,6 +307,8 @@ void setup() {
             for (int i = 0; i < 9; i++) {
                 lattice.cells[x][y].densities[i] = 1; //random(0, INIT_EAST / 20.0);
             }
+
+            lattice.cells[x][y].densities[Direction.NORTH] = 10;
         }
     }
 
@@ -316,19 +328,32 @@ void settings() {
 }
 
 void tickSimulation() {
+    // lattice.cells[20][20].densities[Direction.EAST] = 25;
+
     for (int i = 0; i < ROWS; i++) {
-        lattice.cells[i][0].densities[Direction.EAST] = 10; //INIT_EAST;
-        lattice.cells[i][0].densities[Direction.NORTHEAST] = 0; //INIT_EAST * (9.0 / 36.0);
-        lattice.cells[i][0].densities[Direction.SOUTHEAST] = 0; //INIT_EAST * (9.0 / 36.0);
+        lattice.cells[i][0].densities[Direction.NORTH] = INIT_EAST; //INIT_EAST;
+        lattice.cells[i][0].densities[Direction.NORTHEAST] = INIT_EAST * (9.0 / 36.0);
+        lattice.cells[i][0].densities[Direction.NORTHWEST] = INIT_EAST * (9.0 / 36.0);
         
-        lattice.cells[i][COLS-1].densities[Direction.WEST] = 0;
-        lattice.cells[i][COLS-1].densities[Direction.NORTHWEST] = 0;
-        lattice.cells[i][COLS-1].densities[Direction.SOUTHWEST] = 0;
+        // lattice.cells[i][COLS-1].densities[Direction.NORTH] = INIT_EAST;
+        // lattice.cells[i][COLS-1].densities[Direction.NORTHEAST] = INIT_EAST * (9.0 / 36.0);
+        // lattice.cells[i][COLS-1].densities[Direction.NORTHWEST] = INIT_EAST * (9.0 / 36.0);
+
+        // lattice.cells[i][COLS-1].densities[Direction.NORTH] = INIT_EAST;
+        // lattice.cells[i][COLS-2].densities[Direction.NORTHEAST] = INIT_EAST * (9.0 / 36.0);
+        // lattice.cells[i][COLS-2].densities[Direction.NORTHWEST] = INIT_EAST * (9.0 / 36.0);
         
         // lattice.cells[0][i].densities[Direction.SOUTH] = 2;
         // lattice.cells[COLS - 1][i].densities[Direction.EAST] = 0;
         // lattice.cells[COLS - 1][i].densities[Direction.NORTHEAST] = 0;
         // lattice.cells[COLS - 1][i].densities[Direction.SOUTHEAST] = 0;
+    }
+
+    for (int i = 0; i < ROWS; i++) {
+        for (int j = 0; j < COLS; j++) {
+            lattice.cells[i][j].updateMacroVelocity();
+            lattice.cells[i][j].macroVelocity.x *= C;
+        }
     }
 
     NUM_STEP += 1;
@@ -344,15 +369,15 @@ void tickSimulation() {
     PVector[][] velocities = lattice.getMacroVelocities();
     float[][] densities = lattice.getDensities();
 
-    background(0);
+    background(0, 100, 25);
 
     for (int i = 0; i < ROWS; i++) {
         for (int j = 0; j < COLS; j++) {
             if (lattice.obstacles[i][j] == true) {
                 fill(0, 0, 0);  // black
             } else {
-                int densityMapped = (int) map(densities[i][j], 0, INIT_EAST, 10, 230);
-                fill(densityMapped, 50, 255 - map(densities[i][j], 0, INIT_EAST, 10, 230));
+                int densityMapped = (int) map(densities[i][j], 0, C * INIT_EAST, 10, 230);
+                fill(densityMapped, 50, 255 - densityMapped);
             }
 
             noStroke();
@@ -362,7 +387,7 @@ void tickSimulation() {
             float startY = i * SCALE + SCALE/2;
 
             stroke(255,255,255);
-            line(startX, startY, startX + velocities[i][j].x * 100, startY + velocities[i][j].y * 100);
+            line(startX, startY, startX + velocities[i][j].x * 10, startY + velocities[i][j].y * 10);
 
             // System.out.println("  East Densities: " + lattice.cells[i][j].densities[Direction.EAST]);
             // System.out.println("  Equilibrium Densities: " + lattice.cells[i][j].getEqDensities(densities[i][j], velocities[i][j])[Direction.EAST]);
