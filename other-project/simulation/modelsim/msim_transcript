@@ -1,0 +1,27 @@
+# do DE1_SoC_Computer_run_msim_rtl_vhdl.do
+# if {[file exists rtl_work]} {
+# 	vdel -lib rtl_work -all
+# }
+# vlib rtl_work
+# vmap work rtl_work
+# Model Technology ModelSim ALTERA vmap 10.4b Lib Mapping Utility 2015.05 May 27 2015
+# vmap -modelsim_quiet work rtl_work 
+# Copying C:/altera_lite/15.1/modelsim_ase/win32aloem/../modelsim.ini to modelsim.ini
+# Modifying modelsim.ini
+# ** Warning: Copied C:/altera_lite/15.1/modelsim_ase/win32aloem/../modelsim.ini to modelsim.ini.
+#          Updated modelsim.ini.
+# 
+# vlog -vlog01compat -work work +incdir+C:/Users/Jeff/Documents/Spring\ 2018/ECE\ 5760/DE1_SoC_Computer_LB {C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/PLL.vo}
+# Model Technology ModelSim ALTERA vlog 10.4b Compiler 2015.05 May 27 2015
+# Start time: 13:43:02 on May 13,2018
+# vlog -reportprogress 300 -vlog01compat -work work "+incdir+C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB" C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/PLL.vo 
+# ** Error: (vlog-7) Failed to open design unit file "C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/PLL.vo" in read mode.
+# 
+# No such file or directory. (errno = ENOENT)
+# End time: 13:43:02 on May 13,2018, Elapsed time: 0:00:00
+# Errors: 1, Warnings: 0
+# ** Error: C:/altera_lite/15.1/modelsim_ase/win32aloem/vlog failed.
+# Error in macro ./DE1_SoC_Computer_run_msim_rtl_vhdl.do line 8
+# C:/altera_lite/15.1/modelsim_ase/win32aloem/vlog failed.
+#     while executing
+# "vlog -vlog01compat -work work +incdir+C:/Users/Jeff/Documents/Spring\ 2018/ECE\ 5760/DE1_SoC_Computer_LB {C:/Users/Jeff/Documents/Spring 2018/ECE 5760..."

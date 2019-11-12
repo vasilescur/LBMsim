@@ -1,0 +1,211 @@
+m255
+K4
+z2
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+dC:/altera/15.0
+vclock_fsm
+!s110 1525880914
+!i10b 1
+!s100 nn^U37S@[VooLfoXX0IXW0
+I8NznN`aZUO@6J=1P3E>E;2
+V`JN@9S9cnhjKRR_L]QIcM3
+dC:/Users/Lab User/Downloads/DE1_SoC_Computer_LB
+w1525880911
+8C:/Users/Lab User/Downloads/DE1_SoC_Computer_LB/clock_fsm.v
+FC:/Users/Lab User/Downloads/DE1_SoC_Computer_LB/clock_fsm.v
+L0 1
+OV;L;10.3d;59
+r1
+!s85 0
+31
+!s108 1525880914.498000
+!s107 C:/Users/Lab User/Downloads/DE1_SoC_Computer_LB/clock_fsm.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Lab User/Downloads/DE1_SoC_Computer_LB/clock_fsm.v|
+!i113 1
+Z0 o-work work
+vDE1_SoC_Computer
+!s110 1526243275
+!i10b 1
+!s100 DH5^HS5i^3Vn=d^2UE4AM0
+Ila13VUbj7^V:K@:KI3zMJ1
+Z1 VDg1SIo80bB@j0V0VzS_@n1
+Z2 dC:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB
+w1526242388
+8C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/DE1_SoC_Computer.v
+FC:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/DE1_SoC_Computer.v
+L0 3
+Z3 OV;L;10.4b;61
+r1
+!s85 0
+31
+!s108 1526243275.000000
+!s107 C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/DE1_SoC_Computer.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/DE1_SoC_Computer.v|
+!i113 1
+R0
+n@d@e1_@so@c_@computer
+vdecoder
+Z4 !s110 1526241325
+!i10b 1
+!s100 f3UN9legh>^6iCTAiTokN2
+I3R>CTmbeHAPW1OR=aeh6I0
+R1
+R2
+Z5 w1526241199
+Z6 8C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/memory.v
+Z7 FC:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/memory.v
+L0 622
+R3
+r1
+!s85 0
+31
+Z8 !s108 1526241325.000000
+Z9 !s107 C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/memory.v|
+Z10 !s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/memory.v|
+!i113 1
+R0
+vdecompose
+R4
+!i10b 1
+!s100 dUKN>FBe@WgYmDnj;g>Sn0
+I:_QiMnoBZ[?@>YoChokfG3
+R1
+R2
+Z11 w1526237685
+Z12 8C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/lattice_boltzmann.v
+Z13 FC:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/lattice_boltzmann.v
+L0 108
+R3
+r1
+!s85 0
+31
+R8
+Z14 !s107 C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/lattice_boltzmann.v|
+Z15 !s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/lattice_boltzmann.v|
+!i113 1
+R0
+vdual_clock_ram
+R4
+!i10b 1
+!s100 _aQCYdcWZBEBoYnP@Aa;W1
+IXl57g_f1SETdX5TXkjH:41
+R1
+R2
+R5
+R6
+R7
+L0 599
+R3
+r1
+!s85 0
+31
+R8
+R9
+R10
+!i113 1
+R0
+vlattice_boltzmann
+R4
+!i10b 1
+!s100 X59bdQ@0U?b^lEETd;W^62
+I@PQQ=Ci4?3RP3ICJ>zYc40
+R1
+R2
+R11
+R12
+R13
+L0 1
+R3
+r1
+!s85 0
+31
+R8
+R14
+R15
+!i113 1
+R0
+vmemory
+R4
+!i10b 1
+!s100 :Q0kY4IJ5io1;2hjIR<L=2
+IDm;AS0]b;VoKJzcU^Ohm`0
+R1
+R2
+R5
+R6
+R7
+L0 1
+R3
+r1
+!s85 0
+31
+R8
+R9
+R10
+!i113 1
+R0
+vshift_reg_v
+R4
+!i10b 1
+!s100 iT:;R4]_o`SGY6f8YGnNH2
+IYB=z7oze9j:IRCQ;_gIe02
+R1
+R2
+w1525883042
+8C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/shift_reg_v.v
+FC:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/shift_reg_v.v
+L0 1
+R3
+r1
+!s85 0
+31
+R8
+!s107 C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/shift_reg_v.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/shift_reg_v.v|
+!i113 1
+R0
+vsigned_mult
+R4
+!i10b 1
+!s100 Uj[a83iXH28289zoKja@<0
+I9kS;eGQfiX1RZ;oaNCOIX1
+R1
+R2
+R11
+R12
+R13
+L0 97
+R3
+r1
+!s85 0
+31
+R8
+R14
+R15
+!i113 1
+R0
+vtestbench
+R4
+!i10b 1
+!s100 :b4VWIFOW6?i235ERDiWE2
+Ie?UDSM5`6J;Q6QN]`U6;P0
+R1
+R2
+w1526240136
+8C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/tb.v
+FC:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/tb.v
+L0 3
+R3
+r1
+!s85 0
+31
+R8
+!s107 C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/tb.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/Users/Jeff/Documents/Spring 2018/ECE 5760/DE1_SoC_Computer_LB/tb.v|
+!i113 1
+R0

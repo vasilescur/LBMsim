@@ -1,0 +1,475 @@
+module memory(clk1, clk2, reset, iCoord_X, iCoord_Y, oRed, oGreen, oBlue);
+	
+	//screen dimensions
+	parameter WIDTH = 8;
+	parameter HEIGHT = 8;
+	parameter WIDTH_BITS = 3; //log2(WIDTH)
+	parameter N_MAX = WIDTH * HEIGHT;
+	parameter COUNT_MAX = 3*WIDTH;
+	parameter N_BITS = 6;
+	parameter SCALE = 4;
+	//states
+	parameter INIT = 0, FILL_MEM = 1, FILL_SR = 2, ITER = 3;
+
+	//inputs
+	input clk1,clk2, reset;
+	input [9:0] iCoord_X;
+	input [9:0] iCoord_Y;
+	
+	// Outputs
+	output [7:0] oRed;
+	output [7:0] oGreen;
+	output [7:0] oBlue;
+	
+	//internal
+	//wire [47:0] tap_out;	//output of shift reg
+	wire [N_BITS-1:0] tap_node0, tap_node1, tap_node2; //decomposed output of shift reg
+	//wire [17:0] base_addr0, base_addr1, base_addr2; //decoded add of f0 for nodes from shift reg
+	reg [N_BITS-1:0] coord_in;
+	wire [N_BITS-1:0] shift_out;
+	
+	//reg [15:0] node00, node10, node20, node01, node11, node21, node02, node12, node22;
+	reg [1:0] state;
+	reg [1:0] next_state;
+	
+	//reg [3*WIDTH_BITS:0] count;
+	reg solve_en;
+	wire [15:0] f0i,f1i,f2i,f3i,f4i,f5i,f6i,f7i,f8i;
+	wire [15:0] f0o,f1o,f2o,f3o,f4o,f5o,f6o,f7o,f8o;
+	wire [15:0] f0o_init,f1o_init,f2o_init,f3o_init,f4o_init,f5o_init,f6o_init,f7o_init,f8o_init;
+	wire [15:0] f0o_write,f1o_write,f2o_write,f3o_write,f4o_write,f5o_write,f6o_write,f7o_write,f8o_write;
+	
+	wire [15:0] f_out;
+	wire [N_BITS-1:0] f_out_r_addr;
+	
+	wire [23:0] color, color_out;
+	
+	assign color_out = (iCoord_X >= SCALE*WIDTH) ? 24'b0 : (iCoord_Y >= SCALE*HEIGHT) ? 24'b0 : color;
+	assign f_out_r_addr = (iCoord_X>>2) + (iCoord_Y>>2)*WIDTH; 
+	
+	assign oRed = color_out[23:16];
+	assign oGreen = color_out[15:8];
+	assign oBlue = color_out[7:0];
+	
+	reg [N_BITS-1:0] f0_w_addr;//, f0_r_addr;
+	reg [N_BITS-1:0] f1_w_addr;//, f1_r_addr;
+	reg [N_BITS-1:0] f2_w_addr;//, f2_r_addr;
+	reg [N_BITS-1:0] f3_w_addr;//, f3_r_addr;
+	reg [N_BITS-1:0] f4_w_addr;//, f4_r_addr;
+	reg [N_BITS-1:0] f5_w_addr;//, f5_r_addr;
+	reg [N_BITS-1:0] f6_w_addr;//, f6_r_addr;
+	reg [N_BITS-1:0] f7_w_addr;//, f7_r_addr;
+	reg [N_BITS-1:0] f8_w_addr;//, f8_r_addr;
+	
+	reg [15:0] tmp1_5, tmp1_3, tmp1_7, tmp2_3, tmp2_7, tmp3_7;
+	reg [15:0] tmp1_2, tmp1_0, tmp1_1, tmp2_0, tmp2_1, tmp3_1;
+	reg [15:0] tmp1_8, tmp1_4, tmp1_6, tmp2_4, tmp2_6, tmp3_6;
+	
+	wire done_init;						//done signal for initialization
+	reg [N_BITS-1:0] count_init; 	//counter for initialization
+	//get nodes from which to look up
+	//assign tap_node0 = tap_out[47:32];
+	//assign tap_node1 = tap_out[31:16];
+	//assign tap_node2 = tap_out[15:0];
+	
+	//multiply by 9 to get address of f0
+	//assign base_addr0 = ({2'b0,tap_node0}<<<3) + {2'b0,tap_node0};
+	//assign base_addr1 = ({2'b0,tap_node1}<<<3) + {2'b0,tap_node1};
+	//assign base_addr2 = ({2'b0,tap_node2}<<<3) + {2'b0,tap_node2};
+	
+	assign done_init = (count_init==N_MAX-1) ? 1'b1 : 1'b0;
+	
+	assign f0o_write = (state == FILL_MEM) ? f0o_init : f0o;
+	assign f1o_write = (state == FILL_MEM) ? f1o_init : f1o;
+	assign f2o_write = (state == FILL_MEM) ? f2o_init : f2o;
+	assign f3o_write = (state == FILL_MEM) ? f3o_init : f3o;
+	assign f4o_write = (state == FILL_MEM) ? f4o_init : f4o;
+	assign f5o_write = (state == FILL_MEM) ? f5o_init : f5o;
+	assign f6o_write = (state == FILL_MEM) ? f6o_init : f6o;
+	assign f7o_write = (state == FILL_MEM) ? f7o_init : f7o;
+	assign f8o_write = (state == FILL_MEM) ? f8o_init : f8o;
+	
+	assign f0o_init = {1'b0, 4'b0000, 11'b01010000000};
+	assign f1o_init = {1'b0, 4'b0000, 11'b00011000000};
+	assign f2o_init = {1'b0, 4'b0000, 11'b00001100000};
+	assign f3o_init = {1'b0, 4'b0000, 11'b00010100000};
+	assign f4o_init = {1'b0, 4'b0000, 11'b00010100000};
+	assign f5o_init = {1'b0, 4'b0000, 11'b00000100000};
+	assign f6o_init = {1'b0, 4'b0000, 11'b00000110000};
+	assign f7o_init = {1'b0, 4'b0000, 11'b00000110000};
+	assign f8o_init = {1'b0, 4'b0000, 11'b00000100000};
+	
+	
+	// intermediate registers to hold values off of shift reg
+	always @(posedge clk1) begin
+		
+		// READ FROM MEMORY
+		// top row
+		//load 5,3,7
+		//f5_r_addr <= tap_node0[14:0];
+		//f3_r_addr <= tap_node0[14:0];
+		//f7_r_addr <= tap_node0[14:0];
+		//node20
+		tmp1_5 <= f5i; //to solver, from memory
+		tmp1_3 <= f3i;
+		tmp1_7 <= f7i;
+		//node10
+		tmp2_3 <= tmp1_3; //to solver
+		tmp2_7 <= tmp1_7;
+		//node00
+		tmp3_7 <= tmp2_7; //to solver
+		
+		// middle row
+		//load 2, 0 ,1
+		//f2_r_addr <= tap_node1[14:0];
+		//f0_r_addr <= tap_node1[14:0];
+		//f1_r_addr <= tap_node1[14:0];
+		//node21
+		tmp1_2 <= f2i; //to solver, from memory
+		tmp1_0 <= f0i;
+		tmp1_1 <= f1i;
+		//node11
+		tmp2_0 <= tmp1_0; //to solver
+		tmp2_1 <= tmp1_1;
+		//node01
+		tmp3_1 <= tmp2_1; //to solver
+		
+		// bottom row
+		//load 8, 4, 6
+		//f8_r_addr <= tap_node2[14:0];
+		//f4_r_addr <= tap_node2[14:0];
+		//f6_r_addr <= tap_node2[14:0];
+		
+		//node22
+		tmp1_8 <= f8i; //to solver, from memory
+		tmp1_4 <= f4i;
+		tmp1_6 <= f6i;
+		//node12
+		tmp2_4 <= tmp1_4; //to solver
+		tmp2_6 <= tmp1_6;
+		//node02
+		tmp3_6 <= tmp2_6; //to solver
+		
+		/*
+		node20 <= tap_node0
+		node10 <= node20;
+		node00 <= node00;
+		
+		node21 <= tap_node1;
+		node11 <= node21;
+		node01 <= node11;
+		
+		node22 <= tap_node2;
+		node12 <= node22;
+		node02 <= node12;
+		*/
+		
+		//WRITE TO MEMORY
+		// write to memaddr tap_node1 - 1 --> last node solved
+		// no need to explicity subtract since one cycle behind
+		/*
+		f0_w_addr <= tap_node1;
+		f1_w_addr <= tap_node1;
+		f2_w_addr <= tap_node1;
+		f3_w_addr <= tap_node1;
+		f4_w_addr <= tap_node1;
+		f5_w_addr <= tap_node1;
+		f6_w_addr <= tap_node1;
+		f7_w_addr <= tap_node1;
+		f8_w_addr <= tap_node1;
+		*/
+	end
+	
+	
+	//**state machine to iterate through shift reg
+	
+	//next state transition
+	always @(posedge clk1) begin
+		if (~reset) begin
+			state <= INIT;
+		end
+		else begin
+			state <= next_state;
+		end
+	end
+	
+	// Output logic
+	always @(posedge clk1) begin
+		//init
+		if (state == INIT) begin
+			//count <= 0;
+			coord_in <= 0;
+			solve_en <= 0;
+			count_init <= 0;
+		end
+		//initialize memory
+		else if (state == FILL_MEM) begin
+			count_init <= count_init + 1;
+			
+			f0_w_addr <= count_init;
+			f1_w_addr <= count_init;
+			f2_w_addr <= count_init;
+			f3_w_addr <= count_init;
+			f4_w_addr <= count_init;
+			f5_w_addr <= count_init;
+			f6_w_addr <= count_init;
+			f7_w_addr <= count_init;
+			f8_w_addr <= count_init;
+			
+			
+			
+			solve_en <= 1'b1;
+		end
+		//fill up shift register
+		else if (state == FILL_SR) begin
+			//count <= count + 1;
+			coord_in <= coord_in + 1;
+			solve_en <= 1'b0;
+		end
+		//ITER: iterate over pixels for solution
+		else begin
+			solve_en = 1'b1;
+			
+			f0_w_addr <= tap_node1;
+			f1_w_addr <= tap_node1;
+			f2_w_addr <= tap_node1;
+			f3_w_addr <= tap_node1;
+			f4_w_addr <= tap_node1;
+			f5_w_addr <= tap_node1;
+			f6_w_addr <= tap_node1;
+			f7_w_addr <= tap_node1;
+			f8_w_addr <= tap_node1;
+			
+			if (coord_in == N_MAX - 1) begin 
+				coord_in <= 0;
+			end
+			else begin
+				coord_in <= coord_in + 1;
+			end
+			
+			
+		end
+	end
+	
+	// Next state logic
+	always @(*) begin
+		if (~reset) begin
+			next_state <= INIT;
+		end
+		else if (state == INIT) begin
+			next_state <= FILL_MEM;
+		end
+		else if (state == FILL_MEM && done_init) begin
+			next_state <= FILL_SR;
+		end
+		else if (state == FILL_MEM && ~done_init) begin
+			next_state <= FILL_MEM;
+		end
+		else if (state == FILL_SR && coord_in == COUNT_MAX-1) begin
+			next_state <= ITER;
+		end
+		else if (state == FILL_SR && coord_in < COUNT_MAX-1) begin
+			next_state <=FILL_SR;
+		end
+		//ITER
+		else if (state == ITER) begin
+			next_state <= ITER;
+		end
+		else begin
+			next_state <= INIT;
+		end
+		
+	end
+	
+	//**end state machine
+	
+	decoder d (
+		.in(f_out),
+		.out(color)
+	);
+	
+	lattice_boltzmann lb(
+		.f0i(tmp2_0), 
+		.f1i(tmp3_1), 
+		.f2i(tmp1_2), 
+		.f3i(tmp2_3), 
+		.f4i(tmp2_4), 
+		.f5i(tmp1_5), 
+		.f6i(tmp3_6), 
+		.f7i(tmp3_7), 
+		.f8i(tmp1_8), 
+		.clk(clk1), 
+		.reset(reset), 
+		.f0o(f0o), 
+		.f1o(f1o), 
+		.f2o(f2o), 
+		.f3o(f3o), 
+		.f4o(f4o), 
+		.f5o(f5o), 
+		.f6o(f6o), 
+		.f7o(f7o), 
+		.f8o(f8o)
+	);
+	
+	//Altera IP
+	/*
+	shift_reg sr (
+		.clock(clk1),
+		.shiftin(coord_in),
+		.shiftout(shift_out),
+		.taps(tap_out)
+	);
+	*/
+	
+	//homemade
+	shift_reg_v#(WIDTH,N_BITS) sr_v (
+		.clk(clk1),
+		.reset(reset),
+		.d(coord_in),
+		.q(shift_out),
+		.tap0_out(tap_node0),
+		.tap1_out(tap_node1),
+		.tap2_out(tap_node2)
+	);
+	
+	//memory blocks
+	dual_clock_ram#(16,N_MAX,N_BITS) m0_vga (
+		.q(f_out),
+		.d(f0o_write),
+		.write_address(f0_w_addr),
+		.read_address(f_out_r_addr),
+		.we(solve_en),
+		.clk1(clk1),
+		.clk2(clk1)
+	);
+	
+	
+	dual_clock_ram#(16,N_MAX,N_BITS) m0 (
+		.q(f0i),
+		.d(f0o_write),
+		.write_address(f0_w_addr),
+		.read_address(tap_node1),
+		.we(solve_en),
+		.clk1(clk1),
+		.clk2(clk1)
+	);
+	dual_clock_ram#(16,N_MAX,N_BITS) m1 (
+		.q(f1i),
+		.d(f1o_write),
+		.write_address(f1_w_addr),
+		.read_address(tap_node1),
+		.we(solve_en),
+		.clk1(clk1),
+		.clk2(clk1)
+	);
+	dual_clock_ram#(16,N_MAX,N_BITS) m2 (
+		.q(f2i),
+		.d(f2o_write),
+		.write_address(f2_w_addr),
+		.read_address(tap_node1),
+		.we(solve_en),
+		.clk1(clk1),
+		.clk2(clk1)
+	);
+	dual_clock_ram#(16,N_MAX,N_BITS) m3 (
+		.q(f3i),
+		.d(f3o_write),
+		.write_address(f3_w_addr),
+		.read_address(tap_node0),
+		.we(solve_en),
+		.clk1(clk1),
+		.clk2(clk1)
+	);
+	dual_clock_ram#(16,N_MAX,N_BITS) m4 (
+		.q(f4i),
+		.d(f4o_write),
+		.write_address(f4_w_addr),
+		.read_address(tap_node2),
+		.we(solve_en),
+		.clk1(clk1),
+		.clk2(clk1)
+	);
+	dual_clock_ram#(16,N_MAX,N_BITS) m5(
+		.q(f5i),
+		.d(f5o_write),
+		.write_address(f5_w_addr),
+		.read_address(tap_node0),
+		.we(solve_en),
+		.clk1(clk1),
+		.clk2(clk1)
+	);
+	dual_clock_ram#(16,N_MAX,N_BITS) m6 (
+		.q(f6i),
+		.d(f6o_write),
+		.write_address(f6_w_addr),
+		.read_address(tap_node2),
+		.we(solve_en),
+		.clk1(clk1),
+		.clk2(clk1)
+	);
+	dual_clock_ram#(16,N_MAX,N_BITS) m7 (
+		.q(f7i),
+		.d(f7o_write),
+		.write_address(f7_w_addr),
+		.read_address(tap_node0),
+		.we(solve_en),
+		.clk1(clk1),
+		.clk2(clk1)
+	);
+	dual_clock_ram#(16,N_MAX,N_BITS) m8 (
+		.q(f8i),
+		.d(f8o_write),
+		.write_address(f8_w_addr),
+		.read_address(tap_node2),
+		.we(solve_en),
+		.clk1(clk1),
+		.clk2(clk1)
+	);
+	
+	
+endmodule
+
+// Dual clock, dual port SRAM (M10K)
+module dual_clock_ram
+//#(parameter DATA_WIDTH=8, parameter ADDR_WIDTH=6)
+#(parameter DATA_WIDTH=16, parameter NUM_ADDR=19200, parameter ADDR_WIDTH = 15)
+(
+ output reg [(DATA_WIDTH-1):0] q,
+ input [(DATA_WIDTH-1):0] d,
+ input [(ADDR_WIDTH-1):0] write_address, read_address,
+ input we, clk1, clk2
+);
+	reg [(ADDR_WIDTH-1):0] read_address_reg;
+	reg [(DATA_WIDTH-1):0] mem [NUM_ADDR-1:0];
+	//write
+	always @ (posedge clk1) begin
+		if (we)
+			mem[write_address] <= d;
+		end
+	//read
+	always @ (posedge clk2) begin
+		q <= mem[read_address_reg];
+		read_address_reg <= read_address;
+	end
+endmodule
+
+module decoder
+(
+input [15:0] in,
+output reg [24:0] out
+);
+always @(*) begin
+	if 	  (in > 16'b0111001100110011) out = 24'hC41313; //0.9, deep red
+	else if (in > 16'b0110011001100110) out = 24'hFF0000; //0.8, red
+	else if (in > 16'b0101100110011001) out = 24'hFF4D00; //0.7, red-orange
+	else if (in > 16'b0100110011001100) out = 24'hFF8000; //0.6, orance
+	else if (in > 16'b0100000000000000) out = 24'hFFFF00; //0.5, yellow
+	else if (in > 16'b0011001100110011) out = 24'hB3FF00; //0.4, yellow-green
+	else if (in > 16'b0010011001100110) out = 24'h80FF00; //0.3, green
+	else if (in > 16'b0001100110011001) out = 24'h00CC66; //0.2, green-blue
+	else if (in > 16'b0000110011001100) out = 24'h00FFFF; //0.1, blue
+	else 											out = 24'h0066CC; //0.0
+end
+
+endmodule
+
