@@ -12,10 +12,10 @@ from backend import LBMsolver, PythonBackend
 
 if __name__ == "__main__":
     # Constants
-    time_steps : int = 300
+    time_steps : int = 50
     nu_f = 0.1
-    nx = 201
-    nz = 101
+    nx = 101
+    nz = 51
 
     # Plot
     plt.axis([0, nx, 0, nz])
